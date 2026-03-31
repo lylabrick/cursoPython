@@ -1,0 +1,1 @@
+from .flat import flatten_ejercicio1
