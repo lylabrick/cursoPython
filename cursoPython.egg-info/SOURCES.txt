@@ -1,0 +1,10 @@
+pyproject.toml
+biblioteca/Persona.py
+biblioteca/__init__.py
+cursoPython.egg-info/PKG-INFO
+cursoPython.egg-info/SOURCES.txt
+cursoPython.egg-info/dependency_links.txt
+cursoPython.egg-info/top_level.txt
+entities/Producto.py
+entities/__init__.py
+tests/test_utils.py
