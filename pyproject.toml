@@ -9,3 +9,6 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["entities*", "biblioteca*"]
+
+[tool.pytest.ini_options]
+addopts = "-v -s"
