@@ -16,7 +16,7 @@ class Prestamo:
 
     @property
     def socio(self):
-        return self._libro
+        return self._socio
 
     @property
     def activo(self):
