@@ -16,7 +16,7 @@ class Persona(ABC):
         return self._email
     
     @abstractmethod
-    def descripcion(self):
+    def descripcion(self) -> str:
         pass
 
     def __str__(self):

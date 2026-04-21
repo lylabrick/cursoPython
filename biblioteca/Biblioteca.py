@@ -34,6 +34,12 @@ class Biblioteca:
             if prestamo.libro.isbn == isbn and prestamo.activo:
                 prestamo.devolver()
                 return
+            
+    def agregar_a_lista_de_espera(self, isbn: str, socio: Socio):
+        libro = self._buscar_libro(isbn)
+        if libro:
+            libro.suscribir(socio)
+            print(f"✅ {socio.nombre} agregado a lista de espera de '{libro.titulo}'")
     
     def libros_disponibles(self) -> list[Libro]:
         return[l for l in self._libros if l.disponible]
