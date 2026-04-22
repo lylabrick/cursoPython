@@ -3,14 +3,20 @@ from dataclasses import dataclass
 from biblioteca.Libro import Libro
 from biblioteca.Socio import Socio
 from biblioteca.Prestamo import Prestamo
+from biblioteca.EstrategiaMulta import EstrategiaMulta
+from datetime import date
 
-
+@dataclass
 class Biblioteca:
-    def __init__(self, nombre:str):
+    DIAS_PRESTAMO = 7
+
+    def __init__(self, nombre:str, estrategia_multa: EstrategiaMulta = None):
         self._nombre = nombre
+        self._estrategia_multa = estrategia_multa or MultaPorDia()
         self._libros: list[Libro] = []
         self._socios: list[Socio] = []
         self._prestamos: list[Prestamo] = []
+ 
 
     def agregar_libro(self, libro: Libro):
         self._libros.append(libro)
@@ -24,16 +30,25 @@ class Biblioteca:
             print(f"DEBUG: El objeto libro es: {libro}")
             print(f"DEBUG: El tipo de libro.prestar es: {type(libro.prestar)}")
             libro.prestar() # Aquí es donde falla
-            prestamo = Prestamo(libro, socio)
+            prestamo = Prestamo(_libro = libro, _socio = socio, 
+                                _fecha_inicio = date.today(), 
+                                _fecha_limite = date.today().replace(day=date.today() + self.DIAS_PRESTAMO),
+                                _estrategia_multa = self._estrategia_multa)
             self._prestamos.append(prestamo)
             return prestamo
         return None
     
-    def devolver_libro(self, isbn: str):
+    def devolver_libro(self, isbn: str, fecha: date = None) -> float:
         for prestamo in self._prestamos:
             if prestamo.libro.isbn == isbn and prestamo.activo:
-                prestamo.devolver()
-                return
+                prestamo.devolver(fecha)
+                multa = prestamo.calcular_multa()
+                if multa > 0:
+                    print(f"⚠️ Devolucion tardía - multa: ${multa:.2f} ({self._estrategia_multa.descripcion()})")
+                else:
+                    print("✅ Devolución en término, sin multa")
+                return multa
+        return 0.0
             
     def agregar_a_lista_de_espera(self, isbn: str, socio: Socio):
         libro = self._buscar_libro(isbn)

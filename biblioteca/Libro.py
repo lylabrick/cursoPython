@@ -7,6 +7,7 @@ class Libro(Observable):
     _titulo: str
     _autor: str
     _isbn: str
+    _categoria: str = "novela"
     _disponible: bool = True
     _lista_espera: list[Observer] = field(default_factory=list)
 
@@ -22,6 +23,10 @@ class Libro(Observable):
     def isbn(self):
         return self._isbn    
     
+    @property
+    def categoria(self):
+        return self._isbn
+
     @property
     def lista_espera(self):
         return self.lista_espera
