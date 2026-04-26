@@ -1,60 +1,32 @@
-from dataclasses import dataclass, field
-from biblioteca.Observable import Observable 
-from biblioteca.Observer import Observer
+from dataclasses import dataclass
+from biblioteca.Autor import Autor
 
 @dataclass
-class Libro(Observable):
+class Libro:
     _titulo: str
-    _autor: str
+    _autor: Autor
     _isbn: str
     _categoria: str = "novela"
     _disponible: bool = True
-    _lista_espera: list[Observer] = field(default_factory=list)
 
     @property
-    def titulo(self):
-        return self._titulo
-    
-    @property
-    def autor(self):
-        return self._autor
+    def titulo(self): return self._titulo
 
     @property
-    def isbn(self):
-        return self._isbn    
-    
-    @property
-    def categoria(self):
-        return self._isbn
+    def autor(self): return self._autor
 
     @property
-    def lista_espera(self):
-        return self.lista_espera
+    def isbn(self): return self._isbn
 
     @property
-    def disponible(self):
-        return self._disponible
-    
-    def suscribir(self, observer: Observer):
-        if observer not in self._lista_espera:
-            self._lista_espera.append(observer)
+    def categoria(self): return self._categoria
 
-    def desuscribir(self, observer: Observer):
-        if observer in self._lista_espera:
-            self._lista_espera.remove(observer)
-    
-    def notificar(self, mensaje: str):
-        for observer in self._lista_espera:
-            observer.actualizar(mensaje)
+    @property
+    def disponible(self): return self._disponible
 
-    def prestar(self):
-        self._disponible = False
+    def prestar(self): self._disponible = False
 
-    def devolver(self):
-        self._disponible = True
-        self.notificar(f"El libro '{self._titulo}' ya esta disponible")
+    def devolver(self): self._disponible = True
 
     def __str__(self):
-        estado = "disponible" if self._disponible else "prestado"
-        en_espera = len(self._lista_espera)
-        return f"'{self._titulo}' [{estado}] - {en_espera} en lista de espera"
+        return f"'{self._titulo}' [{self._categoria}]"

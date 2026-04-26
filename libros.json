@@ -1,0 +1,13 @@
+{
+  "978-123": {
+    "titulo": "Ficciones",
+    "isbn": "978-123",
+    "categoria": "novela",
+    "disponible": false,
+    "autor": {
+      "nombre": "Borges",
+      "email": "borges@email.com",
+      "nacionalidad": "Argentina"
+    }
+  }
+}

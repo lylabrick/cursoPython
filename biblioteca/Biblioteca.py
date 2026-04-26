@@ -1,75 +1,67 @@
 from __future__ import annotations
 from dataclasses import dataclass
+from typing import Optional
 from biblioteca.Libro import Libro
 from biblioteca.Socio import Socio
 from biblioteca.Prestamo import Prestamo
-from biblioteca.EstrategiaMulta import EstrategiaMulta
-from datetime import date
+from biblioteca.persistencia.RepositorioLibros import RepositorioLibros
+from biblioteca.persistencia.RepositorioPrestamos import RepositorioPrestamos
+from biblioteca.persistencia.RepositorioSocios import RepositorioSocios
+from datetime import date, timedelta
 
 @dataclass
 class Biblioteca:
     DIAS_PRESTAMO = 7
 
-    def __init__(self, nombre:str, estrategia_multa: EstrategiaMulta = None):
+    def __init__(self, 
+                nombre:str, 
+                repo_libros: RepositorioLibros, 
+                repo_socios: RepositorioSocios,
+                repo_prestamos: RepositorioPrestamos,            
+    ):
         self._nombre = nombre
-        self._estrategia_multa = estrategia_multa or MultaPorDia()
-        self._libros: list[Libro] = []
-        self._socios: list[Socio] = []
-        self._prestamos: list[Prestamo] = []
- 
+        self._repo_libros = repo_libros
+        self._repo_socios = repo_socios
+        self._repo_prestamos = repo_prestamos
 
     def agregar_libro(self, libro: Libro):
-        self._libros.append(libro)
+        self._repo_libros.guardar(libro)
 
     def registrar_socio(self, socio: Socio):
-        self._socios.append(socio)
+        self._repo_socios.guardar(socio)
 
-    def prestar_libro(self, isbn:str, socio: Socio) -> Prestamo | None:
-        libro = self._buscar_libro(isbn)
-        if libro and libro.disponible:
-            print(f"DEBUG: El objeto libro es: {libro}")
-            print(f"DEBUG: El tipo de libro.prestar es: {type(libro.prestar)}")
-            libro.prestar() # Aquí es donde falla
-            prestamo = Prestamo(_libro = libro, _socio = socio, 
-                                _fecha_inicio = date.today(), 
-                                _fecha_limite = date.today().replace(day=date.today() + self.DIAS_PRESTAMO),
-                                _estrategia_multa = self._estrategia_multa)
-            self._prestamos.append(prestamo)
+    def prestar_libro(self, isbn:str, numero_socio: int) -> Optional[Prestamo]:
+        libro = self._repo_libros.buscar_por_isbn(isbn)
+        socio = self._repo_socios.buscar_por_numero(numero_socio)
+        if libro and socio and libro.disponible:
+            libro.prestar()
+            self._repo_libros.guardar(libro)
+            fecha_inicio = date.today()
+            fecha_limite = fecha_inicio + timedelta(days=self.DIAS_PRESTAMO)
+            prestamo = Prestamo(
+                libro, socio,
+                fecha_inicio,
+                fecha_limite,
+            )
+            self._repo_prestamos.guardar(prestamo)
             return prestamo
         return None
     
     def devolver_libro(self, isbn: str, fecha: date = None) -> float:
-        for prestamo in self._prestamos:
-            if prestamo.libro.isbn == isbn and prestamo.activo:
-                prestamo.devolver(fecha)
-                multa = prestamo.calcular_multa()
-                if multa > 0:
-                    print(f"⚠️ Devolucion tardía - multa: ${multa:.2f} ({self._estrategia_multa.descripcion()})")
-                else:
-                    print("✅ Devolución en término, sin multa")
-                return multa
-        return 0.0
-            
-    def agregar_a_lista_de_espera(self, isbn: str, socio: Socio):
-        libro = self._buscar_libro(isbn)
-        if libro:
-            libro.suscribir(socio)
-            print(f"✅ {socio.nombre} agregado a lista de espera de '{libro.titulo}'")
+        prestamo = self._repo_prestamos.buscar_activo_por_isbn(isbn)
+        if prestamo:
+            prestamo.devolver()
+            self._repo_libros.guardar(prestamo.libro)
+            self._repo_prestamos.guardar(prestamo)
     
     def libros_disponibles(self) -> list[Libro]:
-        return[l for l in self._libros if l.disponible]
+        return [l for l in self._repo_libros.listar_todos() if l.disponible]
     
-    def prestamos_activos(self) -> list[Prestamo]:
-        return [p for p in self._prestamos if p.activo]
-    
-    def _buscar_libro(self, isbn: str) -> Libro | None:
-        for libro in self._libros:
-            if libro.isbn == isbn:
-                return libro
-        return None
+    def prestamos_activos(self):
+        return self._repo_prestamos.listar_activos()
     
     def __str__(self):
-        return f"Biblioteca '{self._nombre}' - {len(self._libros)} libros, {len(self._socios)} socios"
+        return f"Biblioteca '{self._nombre}'"
     
 
     

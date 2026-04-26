@@ -1,43 +1,57 @@
 from datetime import date
-import unittest
+
 from biblioteca.Autor import Autor
-from biblioteca.Socio import Socio
 from biblioteca.Libro import Libro
 from biblioteca.Prestamo import Prestamo
-from biblioteca.Biblioteca import Biblioteca
+from biblioteca.Socio import Socio
 
-class TestPrestamo(unittest.TestCase):
 
-    def setUp(self):
-        self.autor = Autor("Borges", "borges@email.com", "Argentina")
-        self.libro = Libro("Ficciones", self.autor, "978-123")
-        self.socio = Socio("Laura", "laura@email.com", 1)
-        self.prestamo = Prestamo(self.libro, self.socio)
+def test_prestamo_libro_y_socio():
+    autor = Autor("Borges", "borges@email.com", "Argentina")
+    libro = Libro("Ficciones", autor, "978-123")
+    socio = Socio("Laura", "laura@email.com", 1)
 
-    def test_libro(self):
-        self.assertEqual(self.prestamo.libro, self.libro)
+    prestamo = Prestamo(libro, socio, date(2026, 4, 25), date(2026, 5, 2))
 
-    def test_socio(self):
-        self.assertEqual(self.prestamo.socio, self.socio)
+    assert prestamo.libro is libro
+    assert prestamo.socio is socio
 
-    def test_activo_por_defecto(self):
-        self.assertTrue(self.prestamo.activo)
 
-    def test_fecha_inicio_es_hoy(self):
-        self.assertEqual(self.prestamo._fecha_inicio, date.today())
+def test_prestamo_activo_por_defecto():
+    autor = Autor("Borges", "borges@email.com", "Argentina")
+    libro = Libro("Ficciones", autor, "978-123")
+    socio = Socio("Laura", "laura@email.com", 1)
 
-    def test_devolver(self):
-        self.prestamo.devolver()
-        self.assertFalse(self.prestamo.activo)
+    prestamo = Prestamo(libro, socio, date(2026, 4, 25), date(2026, 5, 2))
 
-    def test_devolver_actualiza_libro(self):
-        self.libro.prestar()
-        self.prestamo.devolver()
-        self.assertTrue(self.libro.disponible)
+    assert prestamo.activo is True
 
-    def test_str_activo(self):
-        self.assertIn("activo", str(self.prestamo))
 
-    def test_str_devuelto(self):
-        self.prestamo.devolver()
-        self.assertIn("devuelto", str(self.prestamo))
+def test_devolver_setea_fecha_y_devuelve_libro():
+    autor = Autor("Borges", "borges@email.com", "Argentina")
+    libro = Libro("Ficciones", autor, "978-123")
+    socio = Socio("Laura", "laura@email.com", 1)
+
+    libro.prestar()
+    assert libro.disponible is False
+
+    prestamo = Prestamo(libro, socio, date(2026, 4, 25), date(2026, 5, 2))
+    prestamo.devolver(date(2026, 4, 26))
+
+    assert prestamo.activo is False
+    assert prestamo._fecha_devolucion == date(2026, 4, 26)
+    assert libro.disponible is True
+
+
+def test_str_activo_y_devuelto():
+    autor = Autor("Borges", "borges@email.com", "Argentina")
+    libro = Libro("Ficciones", autor, "978-123")
+    socio = Socio("Laura", "laura@email.com", 1)
+
+    prestamo = Prestamo(libro, socio, date(2026, 4, 25), date(2026, 5, 2))
+    assert "activo" in str(prestamo)
+
+    prestamo.devolver(date(2026, 4, 26))
+    s = str(prestamo)
+    assert "devuelto" in s
+    assert "2026-04-26" in s
