@@ -9,6 +9,6 @@
         "strings": "off"
     },
     "python.testing.pytestArgs": [
-        "."
+        "tests"
     ]
 }
