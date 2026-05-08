@@ -1,0 +1,23 @@
+# --- Core Libraries ---
+requests==2.33.1
+beautifulsoup4==4.14.3
+python-dotenv==1.2.2
+
+# --- AWS & Cloud (Solo si usas S3/Lambda) ---
+boto3==1.43.3
+botocore==1.43.3
+
+# --- Data & Utilities ---
+pillow==12.2.0
+reportlab==4.5.0
+matplotlib-inline==0.2.1
+
+# --- CLI & Logic ---
+typer==0.25.1
+click==8.3.3
+kanren==0.3.0
+python-constraint==1.4.0
+
+# --- Formatting & Logs ---
+rich==15.0.0
+colorama==0.4.6
