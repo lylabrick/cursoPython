@@ -3,17 +3,17 @@ from services.entities.entidades import Persona,Cliente,Miembro
 from services.dto.PersonaDto import PersonaDTO
 from typing import Optional
 
-# Suponiendo que tienes un modelo de BD definido con SQLAlchemy llamado PersonaModel
+# Suponiendo que tienes un modelo de BD definido con SQLAlchemy llamado Persona
 class SQLPersonaRepository(PersonaRepository):
     def __init__(self, db_session):
         self.session = db_session
 
-    def save(self, persona: 'Persona') -> 'Persona':
+    def save(self, persona: Persona) -> Persona:
         self.session.add(persona)
         self.session.commit()
         return persona
 
-    def find_by_id(self, persona_id: int) -> Optional['Persona']:
+    def find_by_id(self, persona_id: int) -> Optional[Persona]:
         result = self.session.query(Persona).filter_by(id=persona_id).first()
         if not result:
             return None
