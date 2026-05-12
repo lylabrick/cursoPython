@@ -14,7 +14,11 @@ class ServiciosPersonaImpl(ServicioPersona):
         persona = self.repository.find_by_id(persona_id)
         if not persona:
             raise ValueError(f"Persona con id {persona_id} no encontrada")
-        return persona
+        
+        if isinstance(persona, Cliente):
+            return ClienteDTO.from_entity(persona)
+        elif isinstance(persona, Miembro):
+            return MiembroDTO.from_entity(persona)
 
     def buscarPersonaPorDni(self, dni: int) -> Persona:
         # Implementación pendiente en el repositorio si se requiere

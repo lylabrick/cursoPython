@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
-from typing import List
+from typing import List, Literal, Union
 
 class PersonaDTO(BaseModel):
     # Definimos los campos que queremos exponer
@@ -25,27 +25,11 @@ class PersonaDTO(BaseModel):
         )
 
 class ClienteDTO(PersonaDTO):
+    type: Literal["cliente"] = "cliente"  # valor fijo
     nivelesporsubir: int
 
-    @classmethod
-    def from_entity(cls, cliente: "Cliente"):
-        return cls(
-            dni=cliente.dni,
-            nombre=cliente.nombre,
-            email=cliente.email,
-            intereses=cliente.intereses,
-            nivelesporsubir=cliente.nivelesporsubir
-        )
-
 class MiembroDTO(PersonaDTO):
+    type: Literal["miembro"] = "miembro"  # valor fijo
     descuento: float
 
-    @classmethod
-    def from_entity(cls, miembro: "Miembro"):
-        return cls(
-            dni=miembro.dni,
-            nombre=miembro.nombre,
-            email=miembro.email,
-            intereses=miembro.intereses,
-            descuento=miembro.descuento
-        )
+PersonaResponse = Union[ClienteDTO, MiembroDTO]
