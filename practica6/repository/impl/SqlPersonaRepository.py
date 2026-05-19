@@ -14,13 +14,24 @@ class SQLPersonaRepository(PersonaRepository):
         return persona
 
     def find_by_id(self, persona_id: int) -> Optional[Persona]:
-        result = self.session.query(Persona).filter_by(id=persona_id).first()
-        if not result:
-            return None
-        return result
+        # 1. Buscamos primero en la tabla de clientes
+        result = self.session.query(Cliente).filter_by(id=persona_id).first()
+        if result:
+            return result
+        # 2. Si no es cliente, buscamos en la tabla de miembros
+        return self.session.query(Miembro).filter_by(id=persona_id).first()
+
+    def find_by_dni(self, dni: int) -> Optional[Persona]:
+        # 1. Buscamos primero por DNI en la tabla de clientes
+        result = self.session.query(Cliente).filter_by(dni=dni).first()
+        if result:
+            return result
+        # 2. Si no es cliente, buscamos en la tabla de miembros
+        return self.session.query(Miembro).filter_by(dni=dni).first()
 
     def find_all(self):
-        return self.session.query(Persona).all()
+        # Retornamos la lista combinada de ambas tablas
+        return self.session.query(Cliente).all() + self.session.query(Miembro).all()
 
     def delete(self, persona_id: int) -> bool:
         persona = self.find_by_id(persona_id)

@@ -13,11 +13,14 @@ class ServicioPelicula(Protocol):
     def buscarPelicula(self, titulo: str) -> Pelicula:
         ...
         
-    def buscarPorGenero(self, genero: str) -> list(Pelicula):
+    def buscarPorGenero(self, genero: str) -> list[Pelicula]:
         ...
         
-    def prestamoDePelicula(self, pelicula: Pelicula, persona: Persona) -> Alquiler:
+    def alquilarPelicula(self, pelicula: Pelicula, persona: Persona) -> Alquiler:
         ...
 
-    def devolucionDePelicula(self, pelicula: Pelicula) -> None:
+    def devolverDePelicula(self, pelicula: Pelicula) -> None:
+        ...
+
+    def registrarParaEspera(self, dni: int, pelicula_id: int) -> None:
         ...

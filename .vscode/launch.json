@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: FastAPI",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "cwd": "${workspaceFolder}/practica6",
+            "args": [
+                "main:app",
+                "--reload"
+            ],
+            "jinja": true
+        }
+    ]
+}
