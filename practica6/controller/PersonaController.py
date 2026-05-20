@@ -4,6 +4,7 @@ from database import get_db
 from services.dto.PersonaDto import PersonaDTO, ClienteDTO, MiembroDTO
 from services.impl.serviciosPersonaImpl import ServiciosPersonaImpl
 from repository.impl.SqlPersonaRepository import SQLPersonaRepository
+from services.dto.PersonaDto import PersonaResponse
 
 
 router = APIRouter()
@@ -14,7 +15,7 @@ def get_persona_service(db: Session = Depends(get_db)):
     # Retornamos la implementación del servicio pasándole el repositorio
     return ServiciosPersonaImpl(repo)
 
-@router.get("/personas/{persona_id}", response_model=PersonaDTO)
+@router.get("/personas/{persona_id}", response_model=PersonaResponse)
 def read_persona(persona_id: int, 
                 service: ServiciosPersonaImpl = Depends(get_persona_service)):
     try:

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from datetime import date
 from typing import List, Optional
-from sqlalchemy import ForeignKey, String, Integer, Float, Date, JSON
+from sqlalchemy import ForeignKey, String, Integer, Float, Date, JSON, Sequence
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import Table, Column, Integer, String, ForeignKey
 
@@ -23,6 +23,8 @@ pelicula_miembros_interesados = Table(
     Column("pelicula_id", ForeignKey("pelicula.id"), primary_key=True),
     Column("miembro_id", ForeignKey("miembro.id"), primary_key=True),
 )
+
+persona_id_seq = Sequence('persona_id_seq', start=1)
 
 class Pelicula(Base):
     __tablename__ = "pelicula"
@@ -80,7 +82,7 @@ class Pelicula(Base):
 class Persona(Base):
     __abstract__ = True
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(Integer, persona_id_seq, primary_key=True, server_default=persona_id_seq.next_value())
     dni: Mapped[int] = mapped_column(unique=True)
     nombre: Mapped[str] = mapped_column(String(100))
     email: Mapped[str] = mapped_column(String(100))
