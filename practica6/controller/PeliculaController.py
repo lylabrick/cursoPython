@@ -27,15 +27,23 @@ def read_pelicula(pelicula_id: int,
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
+@router.get("/buscarPeliculaPorTitulo/{titulo}", response_model=list[PeliculaDTO])
+def read_pelicula(titulo: str, 
+                service: ServiciosPeliculaImpl = Depends(get_pelicula_service)):
+    try:
+        # Nota: Asegúrate de que buscarPeliculaPorId esté definido en tu implementación
+        return service.buscarPeliculaPorTitulo(titulo)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
 
 @router.post("/pelicula", response_model=PeliculaDTO)
 def create_pelicula(pelicula: PeliculaDTO, 
                     service: ServiciosPeliculaImpl = Depends(get_pelicula_service)):
     try:
-        return service.agregarPelicula(pelicula)
+        return service.agregarPeliculaANegocio(pelicula)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-
 
 @router.post("/devolverPelicula/{pelicula_id}", response_model=PeliculaDTO)
 def devolver_pelicula(pelicula_id: int, 
@@ -43,6 +51,7 @@ def devolver_pelicula(pelicula_id: int,
     try:
         return service.devolverPeliculaANegocio(pelicula_id)
     except ValueError as e:
+        print("ERROR DE VALIDACION REAL:", e)
         raise HTTPException(status_code=400, detail=str(e))
 
 

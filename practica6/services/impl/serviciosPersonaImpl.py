@@ -34,15 +34,20 @@ class ServiciosPersonaImpl(ServicioPersona):
         elif isinstance(persona, Miembro):
             return MiembroDTO.from_entity(persona)
 
-    def buscarPersonaPorNombre(self, nombre: str) -> Persona:
-        persona = self.repository.find_by_name(nombre)
-        if not persona:
-            raise ValueError(f"Persona con nombre {nombre} no encontrada")
+    def buscarPersonaPorNombre(self, nombre: str) -> list:
+        personas = self.repository.find_by_name(nombre)
+        if not personas:
+            raise ValueError(f"No se encontraron personas con el nombre conteniendo '{nombre}'")
         
-        if isinstance(persona, Cliente):
-            return ClienteDTO.from_entity(persona)
-        elif isinstance(persona, Miembro):
-            return MiembroDTO.from_entity(persona)
+        resultados = []
+        for persona in personas:
+            if isinstance(persona, Cliente):
+                resultados.append(ClienteDTO.from_entity(persona))
+            elif isinstance(persona, Miembro):
+                resultados.append(MiembroDTO.from_entity(persona))
+                
+        return resultados
+
     
     def agregarInteres(self, persona_id: int, interes: str) -> Persona:
         persona = self.repository.find_by_id(persona_id)

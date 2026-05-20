@@ -8,6 +8,7 @@ class PeliculaDTO(BaseModel):
     genero: str
     duracion_minutos: int = Field(..., alias="duracion") # Mapeo de nombre diferente
     estado: str
+    precio: float
 
     # Configuración para compatibilidad con la entidad
     model_config = ConfigDict(
@@ -31,6 +32,20 @@ class PeliculaDTO(BaseModel):
             anio=pelicula.anio,
             director=pelicula.director,
             genero=pelicula.genero,
-            duracion_minutos=pelicula.duracion,
-            estado=pelicula.estado,
+            duracion=pelicula.duracion,
+            estado=cls.validar_estado(pelicula.estado),
+            precio=pelicula.precio 
+        )
+
+    # Agrega este método dentro de la clase PeliculaDTO en PeliculaDto.py
+    def to_entity(self) -> "Pelicula":
+        from services.entities.entidades import Pelicula  # Import local para evitar importaciones circulares
+        return Pelicula(
+            titulo=self.titulo,
+            anio=self.anio,
+            director=self.director,
+            genero=self.genero,
+            duracion=self.duracion_minutos,  # Mapeamos duracion_minutos al campo 'duracion' de la entidad
+            estado=self.estado,
+            precio=9.99  # Asignamos un precio por defecto para el alquiler
         )

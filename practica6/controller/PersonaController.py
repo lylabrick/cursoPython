@@ -48,7 +48,7 @@ def buscarPersonaPorDni(dni: int,
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
-@router.get("/buscarPersonaPorNombre/{nombre}")
+@router.get("/buscarPersonaPorNombre/{nombre}", response_model=list[PersonaResponse])
 def buscarPersonaPorNombre(nombre: str, 
                         service: ServiciosPersonaImpl = Depends(get_persona_service)):
     try:

@@ -4,6 +4,7 @@ from repository.PersonaRepository import PersonaRepository
 from repository.PeliculaRepository import PeliculaRepository
 from services.dto.PeliculaDto import PeliculaDTO
 from services.dto.AlquilerDto import AlquilerDTO
+from services.dto.PeliculaDto import PeliculaDTO
 
 class ServiciosPeliculaImpl(ServicioPelicula):
     
@@ -11,8 +12,9 @@ class ServiciosPeliculaImpl(ServicioPelicula):
         self.repository = repository
         self.repo_persona = repo_persona
 
-    def agregarPeliculaANegocio(self, pelicula: Pelicula) -> Pelicula:
-        pass
+    def agregarPeliculaANegocio(self, pelicula: PeliculaDTO) -> Pelicula:
+        pelicula = pelicula.to_entity()
+        return self.repository.save(pelicula)
 
     def devolverPeliculaANegocio(self, pelicula_id: int) -> Pelicula:
         pelicula = self.repository.find_by_id(pelicula_id)
@@ -30,12 +32,12 @@ class ServiciosPeliculaImpl(ServicioPelicula):
         self.repository.save(pelicula)
         return pelicula
 
-    def buscarPelicula(self, pelicula_id: int) -> Pelicula:
-        pelicula = self.repository.find_by_id(pelicula_id)
-        if not pelicula:
-            raise ValueError(f"Pelicula con id {pelicula_id} no encontrada")
+    def buscarPeliculaPorTitulo(self, titulo: str) -> list[Pelicula]:
+        peliculas = self.repository.find_by_titulo(titulo)
+        if not peliculas:
+            raise ValueError(f"Pelicula con titulo {titulo} no encontrada")
         
-        return PeliculaDTO.from_entity(pelicula)
+        return list(map(lambda p: PeliculaDTO.from_entity(p), peliculas))
 
     def buscarPorGenero(self, genero: str) -> list[Pelicula]:
         peliculas = self.repository.find_by_genero(genero)
@@ -52,8 +54,6 @@ class ServiciosPeliculaImpl(ServicioPelicula):
         # 2. Validar disponibilidad
         if pelicula.estado != "Disponible":
             raise ValueError(f"La película '{pelicula.titulo}' no está disponible (estado: {pelicula.estado})")
-
-        pelicula.estado = "Alquilado"
         
         # 3. Buscar al cliente por DNI
         cliente = self.repo_persona.find_by_dni(dni)
@@ -61,13 +61,13 @@ class ServiciosPeliculaImpl(ServicioPelicula):
             raise ValueError(f"Cliente con DNI {dni} no encontrado")
             
         # 4. Cambiar el estado de la película
-        pelicula.estado = "Alquilado"
+        pelicula.estado = "Alquilada"
 
         # 5. Calcular cobro dinámicamente usando el patrón Strategy que creamos en tu Entidad
         precio_base = pelicula.precio  # El costo estándar del alquiler
         precio_final = cliente.calcular_cobro(precio_base)
         print(f"\n--- TICKET DE COBRO ---")
-        print(f"Cliente: {cliente.nombre} (Tipo: {cliente.type})")
+        print(f"Cliente: {cliente.nombre} (Tipo: {cliente.__class__.__name__})")
         print(f"Película: {pelicula.titulo}")
         print(f"Total Cobrado: ${precio_final} (Estrategia: {cliente.estrategia.__class__.__name__})")
         print(f"-----------------------\n")
@@ -93,6 +93,16 @@ class ServiciosPeliculaImpl(ServicioPelicula):
     def devolucionDePelicula(self, pelicula: Pelicula) -> None:
         pass
 
+    def buscarPeliculaPorId(self, pelicula_id: int) -> Pelicula:
+        try: 
+            pelicula = self.repository.find_by_id(pelicula_id)
+            if not pelicula:
+                raise ValueError(f"Pelicula con id {pelicula_id} no encontrada")
+            return pelicula
+        except ValueError as e:
+            print(f"Error al buscar película por id: {e}")
+            return None
+            
     def registrarParaEspera(self, dni: int, pelicula_id: int) -> None:
         try:
             # 1. Buscar la película

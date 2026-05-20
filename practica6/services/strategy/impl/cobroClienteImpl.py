@@ -1,4 +1,4 @@
-from services.strategy.EstrategiaCobro import EstrategiaCobro
+from services.strategy.estrategiaCobro import EstrategiaCobro
 
 class CobroCliente(EstrategiaCobro):
     """Clientes pagan el precio completo."""

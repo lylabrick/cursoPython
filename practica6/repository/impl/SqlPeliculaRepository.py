@@ -29,4 +29,7 @@ class SQLPeliculaRepository(PeliculaRepository):
         return False
 
     def find_by_genero(self, genero: str) -> list[Pelicula]:
-        return self.session.query(Pelicula).filter_by(genero=genero).all()
+        return self.session.query(Pelicula).filter(Pelicula.genero.ilike(f"%{genero}%")).all()
+
+    def find_by_titulo(self, titulo: str) -> list[Pelicula]:
+        return self.session.query(Pelicula).filter(Pelicula.titulo.ilike(f"%{titulo}%")).all()

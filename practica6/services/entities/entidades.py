@@ -95,7 +95,7 @@ class Persona(Base):
     @property
     def estrategia(self):
         # Importación local para evitar importaciones circulares en Python
-        from services.strategy.impl.cobroCliente import CobroCliente
+        from services.strategy.impl.cobroClienteImpl import CobroCliente
         return CobroCliente()
 
     def calcular_cobro(self, precio_base: float) -> float:

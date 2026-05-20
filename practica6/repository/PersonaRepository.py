@@ -22,3 +22,8 @@ class PersonaRepository(ABC):
     @abstractmethod
     def delete(self, persona_id: int) -> bool:
         pass
+
+    @abstractmethod
+    def find_by_name(self, nombre: str) -> list[Persona]:
+        pass
+    

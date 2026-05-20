@@ -40,3 +40,14 @@ class SQLPersonaRepository(PersonaRepository):
             self.session.commit()
             return True
         return False
+    
+    def find_by_name(self, nombre: str) -> list[Persona]:
+        # Formateamos el patrón de búsqueda para buscar coincidencias parciales
+        patron = f"%{nombre}%"
+        
+        # Buscamos coincidencias en ambas tablas
+        clientes = self.session.query(Cliente).filter(Cliente.nombre.ilike(patron)).all()
+        miembros = self.session.query(Miembro).filter(Miembro.nombre.ilike(patron)).all()
+        
+        # Combinamos y retornamos la lista completa
+        return clientes + miembros
