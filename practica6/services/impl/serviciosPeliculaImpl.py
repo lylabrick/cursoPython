@@ -1,10 +1,11 @@
+from typing import Union
 from services.serviciosPelicula import ServicioPelicula
 from services.entities.entidades import Pelicula, Persona, Alquiler
 from repository.PersonaRepository import PersonaRepository
 from repository.PeliculaRepository import PeliculaRepository
 from services.dto.PeliculaDto import PeliculaDTO
 from services.dto.AlquilerDto import AlquilerDTO
-from services.dto.PeliculaDto import PeliculaDTO
+from services.dto.PersonaDto import ClienteDTO, MiembroDTO
 
 class ServiciosPeliculaImpl(ServicioPelicula):
     
@@ -23,7 +24,7 @@ class ServiciosPeliculaImpl(ServicioPelicula):
 
         pelicula.estado = "Disponible"
     
-        pelicula.notificar_observadores(pelicula.titulo)
+        pelicula.notificar_observadores(pelicula.id)
 
         # 5. Limpiamos la lista de interesados persistente en la BD
         pelicula.interesados.clear()
@@ -55,21 +56,21 @@ class ServiciosPeliculaImpl(ServicioPelicula):
         if pelicula.estado != "Disponible":
             raise ValueError(f"La película '{pelicula.titulo}' no está disponible (estado: {pelicula.estado})")
         
-        # 3. Buscar al cliente por DNI
-        cliente = self.repo_persona.find_by_dni(dni)
-        if not cliente:
-            raise ValueError(f"Cliente con DNI {dni} no encontrado")
+        # 3. Buscar al persona por DNI
+        persona = self.repo_persona.find_by_dni(dni)
+        if not persona:
+            raise ValueError(f"Persona con DNI {dni} no encontrado")
             
         # 4. Cambiar el estado de la película
         pelicula.estado = "Alquilada"
 
         # 5. Calcular cobro dinámicamente usando el patrón Strategy que creamos en tu Entidad
-        precio_base = pelicula.precio  # El costo estándar del alquiler
-        precio_final = cliente.calcular_cobro(precio_base)
+        precio_base = pelicula.precio  
+        precio_final = persona.calcular_cobro(precio_base)
         print(f"\n--- TICKET DE COBRO ---")
-        print(f"Cliente: {cliente.nombre} (Tipo: {cliente.__class__.__name__})")
+        print(f"Cliente: {persona.nombre} (Tipo: {persona.__class__.__name__})")
         print(f"Película: {pelicula.titulo}")
-        print(f"Total Cobrado: ${precio_final} (Estrategia: {cliente.estrategia.__class__.__name__})")
+        print(f"Total Cobrado: ${precio_final} (Estrategia: {persona.estrategia.__class__.__name__})")
         print(f"-----------------------\n")
 
         # 6. Crear el registro en la tabla Alquiler
@@ -79,7 +80,7 @@ class ServiciosPeliculaImpl(ServicioPelicula):
         
         nuevo_alquiler = Alquiler(
             pelicula=pelicula,
-            cliente=cliente,
+            persona=persona,
             fecha_alquiler=date.today(),
             fecha_prestamo=date.today()
         )
@@ -94,39 +95,37 @@ class ServiciosPeliculaImpl(ServicioPelicula):
         pass
 
     def buscarPeliculaPorId(self, pelicula_id: int) -> Pelicula:
-        try: 
-            pelicula = self.repository.find_by_id(pelicula_id)
-            if not pelicula:
-                raise ValueError(f"Pelicula con id {pelicula_id} no encontrada")
-            return pelicula
-        except ValueError as e:
-            print(f"Error al buscar película por id: {e}")
-            return None
-            
-    def registrarParaEspera(self, dni: int, pelicula_id: int) -> None:
+        pelicula = self.repository.find_by_id(pelicula_id)
+        if not pelicula:
+            raise ValueError(f"Pelicula con id {pelicula_id} no encontrada")
+        return pelicula
+                
+    def registrarParaEspera(self, dni: int, pelicula_id: int) -> Union[ClienteDTO, MiembroDTO]:
         try:
-            # 1. Buscar la película
             pelicula = self.repository.find_by_id(pelicula_id)
             if not pelicula:
                 raise ValueError(f"Pelicula con id {pelicula_id} no encontrada")
 
-            # 2. Buscar la persona por DNI
-            # (Necesitarás acceso al repositorio de personas o llamar a un método de persona)
-            # Asumiendo que `self.repo_persona` existe o pasamos el repo de personas
-            cliente = self.repo_persona.find_by_dni(dni)
-            if not cliente:
-                raise ValueError(f"Cliente con DNI {dni} no encontrado")
+            persona = self.repo_persona.find_by_dni(dni)
+            if not persona:
+                raise ValueError(f"Persona con DNI {dni} no encontrada")
 
-            # 3. Agregar a la lista de interesados
-            # Verificamos si ya está para evitar duplicados (opcional, pero buena práctica)
-            if cliente not in pelicula.interesados:
-                pelicula.interesados.append(cliente)
-                self.repository.save(pelicula) # Guardar cambios en la película
+            from services.entities.entidades import Cliente, Miembro
+            from services.dto.PersonaDto import ClienteDTO, MiembroDTO
+
+            if persona not in pelicula.personas_interesadas:
+                pelicula.personas_interesadas.append(persona)
+                self.repository.save(pelicula)
             else:
-                print(f"El cliente {cliente.nombre} ya está en la lista de espera para {pelicula.titulo}")
+                print(f"{persona.nombre} ya está en la lista de espera para {pelicula.titulo}")
 
-            return ClienteDTO.from_entity(cliente) # O un mensaje de éxito
-        
+            if isinstance(persona, Cliente):
+                return ClienteDTO.from_entity(persona)
+            elif isinstance(persona, Miembro):
+                return MiembroDTO.from_entity(persona)
+            else:
+                raise ValueError("Tipo de persona no soportado")
+
         except ValueError as e:
             print(f"Error al registrar para espera: {e}")
             return None

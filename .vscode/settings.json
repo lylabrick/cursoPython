@@ -2,13 +2,15 @@
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
     "editor.quickSuggestions": {
-
-
         "other": "off",
         "comments": "off",
         "strings": "off"
     },
     "python.testing.pytestArgs": [
         "tests"
-    ]
+    ],
+    "python.analysis.extraPaths": [
+        "$/Users/lylabrick/cursoPython/practica6"
+    ],
+    "python.defaultInterpreterPath": "$/Users/lylabrick/cursoPython/.venv/bin/python"
 }

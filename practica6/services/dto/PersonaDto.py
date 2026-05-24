@@ -59,10 +59,6 @@ class ClienteDTO(PersonaDTO):
         )
 
 class MiembroDTO(PersonaDTO):
-    type: Literal["miembro"] = "miembro"  # valor fijo
-    descuento: float
-
-class MiembroDTO(PersonaDTO):
     type: Literal["miembro"] = "miembro"
     descuento: float
     @classmethod

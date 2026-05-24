@@ -1,4 +1,4 @@
-from services.strategy.EstrategiaCobro import EstrategiaCobro
+from services.strategy.estrategiaCobro import EstrategiaCobro
 from services.entities.entidades import Miembro
 
 class CobroMiembro(EstrategiaCobro):

@@ -11,20 +11,12 @@ from services.Observer.observerPelicula import ObserverPelicula
 class Base(DeclarativeBase):
     pass
 
-pelicula_clientes_interesados = Table(
-    "pelicula_clientes_interesados",
+pelicula_personas_interesadas = Table(
+    "pelicula_personas_interesadas",
     Base.metadata,
     Column("pelicula_id", ForeignKey("pelicula.id"), primary_key=True),
-    Column("cliente_id", ForeignKey("cliente.id"), primary_key=True),
+    Column("persona_id", ForeignKey("persona.id"), primary_key=True),
 )
-pelicula_miembros_interesados = Table(
-    "pelicula_miembros_interesados",
-    Base.metadata,
-    Column("pelicula_id", ForeignKey("pelicula.id"), primary_key=True),
-    Column("miembro_id", ForeignKey("miembro.id"), primary_key=True),
-)
-
-persona_id_seq = Sequence('persona_id_seq', start=1)
 
 class Pelicula(Base):
     __tablename__ = "pelicula"
@@ -41,82 +33,93 @@ class Pelicula(Base):
     # Relaciones
     alquileres: Mapped[List["Alquiler"]] = relationship(back_populates="pelicula")
     recomendaciones: Mapped[List["Recomendacion"]] = relationship(back_populates="pelicula")
-    clientes_interesados: Mapped[List["Cliente"]] = relationship(secondary="pelicula_clientes_interesados")
-    miembros_interesados: Mapped[List["Miembro"]] = relationship(secondary="pelicula_miembros_interesados")
+    personas_interesadas: Mapped[List["Persona"]] = relationship(
+        secondary="pelicula_personas_interesadas"
+    )
 
     @property
     def interesados(self) -> list:
-        return self.clientes_interesados + self.miembros_interesados
+        return self.personas_interesadas
 
     @property
     def observadores(self) -> list:
         from services.Observer.impl.observerPeliculaImpl import PersonaObserver
-        return [PersonaObserver(persona) for persona in self.interesados]
+        return [PersonaObserver(persona) for persona in self.personas_interesadas]
 
     def agregar_observador(self, observer: ObserverPelicula) -> None:
         from services.Observer.impl.observerPeliculaImpl import PersonaObserver
         if isinstance(observer, PersonaObserver):
             persona = observer.persona
-            if isinstance(persona, Cliente):
-                if persona not in self.clientes_interesados:
-                    self.clientes_interesados.append(persona)
-            elif isinstance(persona, Miembro):
-                if persona not in self.miembros_interesados:
-                    self.miembros_interesados.append(persona)
+            if persona not in self.personas_interesadas:
+                self.personas_interesadas.append(persona)
 
     def quitar_observador(self, observer: ObserverPelicula) -> None:
         from services.Observer.impl.observerPeliculaImpl import PersonaObserver
         if isinstance(observer, PersonaObserver):
             persona = observer.persona
-            if isinstance(persona, Cliente):
-                if persona in self.clientes_interesados:
-                    self.clientes_interesados.remove(persona)
-            elif isinstance(persona, Miembro):
-                if persona in self.miembros_interesados:
-                    self.miembros_interesados.remove(persona)
+            if persona in self.personas_interesadas:
+                self.personas_interesadas.remove(persona)
 
-    def notificar_observadores(self, pelicula_titulo: str) -> None:
+    def notificar_observadores(self, pelicula_id: int) -> None:
         for observer in self.observadores:
-            observer.actualizar(pelicula_titulo)
+            print("SE NOTIFICO A LA PERSONA CON DNI ", observer.persona.dni)
+            observer.actualizar(pelicula_id)
+            self.quitar_observador(observer)
+
+persona_id_seq = Sequence('persona_id_seq', start=1)
 
 class Persona(Base):
-    __abstract__ = True
+    __tablename__ = "persona"
+    __mapper_args__ = {
+        "polymorphic_on": "tipo",
+        "polymorphic_identity": "persona"
+    }
 
     id: Mapped[int] = mapped_column(Integer, persona_id_seq, primary_key=True, server_default=persona_id_seq.next_value())
+    tipo: Mapped[str] = mapped_column(String(20))  # columna discriminadora
     dni: Mapped[int] = mapped_column(unique=True)
     nombre: Mapped[str] = mapped_column(String(100))
     email: Mapped[str] = mapped_column(String(100))
     telefono: Mapped[str] = mapped_column(String(20))
     direccion: Mapped[str] = mapped_column(String(200))
     fecha_nacimiento: Mapped[date] = mapped_column(Date)
-    # Guardamos la lista de intereses como JSON en la base de datos
     intereses: Mapped[list] = mapped_column(JSON, default=list)
+
+    # Campos de subclases — Optional porque no aplican a todos
+    nivelesporsubir: Mapped[Optional[int]] = mapped_column(Integer, default=0)
+    descuento: Mapped[Optional[float]] = mapped_column(Float)
+
+    # Relaciones
+    alquileres: Mapped[List["Alquiler"]] = relationship(back_populates="persona")
+    recomendaciones: Mapped[List["Recomendacion"]] = relationship(back_populates="persona")
 
     @property
     def estrategia(self):
-        # Importación local para evitar importaciones circulares en Python
         from services.strategy.impl.cobroClienteImpl import CobroCliente
         return CobroCliente()
 
     def calcular_cobro(self, precio_base: float) -> float:
-        # Persona actúa como el CONTEXTO y delega en su estrategia actual
-        return self.estrategia.calcular_precio(precio_base)       
+        return self.estrategia.calcular_precio(precio_base)
+
 
 class Cliente(Persona):
-    __tablename__ = "cliente"
-    nivelesporsubir: Mapped[int] = mapped_column(Integer, default=0)
+    __mapper_args__ = {
+        "polymorphic_identity": "cliente"
+    }
 
-    alquileres: Mapped[List["Alquiler"]] = relationship(back_populates="cliente")
-    recomendaciones: Mapped[List["Recomendacion"]] = relationship(back_populates="cliente")
-
-class Miembro(Persona):
-    __tablename__ = "miembro"
-    descuento: Mapped[float] = mapped_column(Float)
-
-    # Sobrescribimos la propiedad de la clase base
     @property
     def estrategia(self):
-        # Importación local para evitar importaciones circulares
+        from services.strategy.impl.cobroClienteImpl import CobroCliente
+        return CobroCliente()
+
+
+class Miembro(Persona):
+    __mapper_args__ = {
+        "polymorphic_identity": "miembro"
+    }
+
+    @property
+    def estrategia(self):
         from services.strategy.impl.cobroMiembroImpl import CobroMiembro
         return CobroMiembro(self)
 
@@ -125,12 +128,12 @@ class Recomendacion(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     pelicula_id: Mapped[int] = mapped_column(ForeignKey("pelicula.id"))
-    cliente_id: Mapped[int] = mapped_column(ForeignKey("cliente.id"))
+    persona_id: Mapped[int] = mapped_column(ForeignKey("persona.id"))
     recomendacion: Mapped[str] = mapped_column(String(500))
     fecha: Mapped[date] = mapped_column(Date, default=date.today)
 
     pelicula: Mapped["Pelicula"] = relationship(back_populates="recomendaciones")
-    cliente: Mapped["Cliente"] = relationship(back_populates="recomendaciones")
+    persona: Mapped["Persona"] = relationship(back_populates="recomendaciones")
 
 class Alquiler(Base):
  
@@ -138,7 +141,7 @@ class Alquiler(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     pelicula_id: Mapped[int] = mapped_column(ForeignKey("pelicula.id"))
-    cliente_id: Mapped[int] = mapped_column(ForeignKey("cliente.id"))
+    persona_id: Mapped[int] = mapped_column(ForeignKey("persona.id"))
     
     fecha_alquiler: Mapped[date] = mapped_column(Date)
     calificacion: Mapped[Optional[int]] = mapped_column(Integer)
@@ -147,4 +150,4 @@ class Alquiler(Base):
     fecha_devolucion: Mapped[Optional[date]] = mapped_column(Date)
 
     pelicula: Mapped["Pelicula"] = relationship(back_populates="alquileres")
-    cliente: Mapped["Cliente"] = relationship(back_populates="alquileres")
+    persona: Mapped["Persona"] = relationship(back_populates="alquileres")
